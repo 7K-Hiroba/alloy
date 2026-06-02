@@ -1,0 +1,266 @@
+# Agent Guide
+
+This file is for AI agents and automated tools making changes to this repository. Read this before modifying any files.
+
+## Philosophy: Near-Native
+
+This project follows a **near-native** approach. We prefer upstream, official solutions over custom implementations.
+
+- If the application has an **official Helm chart**, use it as the base rather than writing one from scratch. The `helm/base/` directory may contain the upstream chart as a dependency or a thin wrapper around it.
+- If the application has an **official Docker image**, use it. Only maintain a custom Dockerfile if the 7KGroup admins have determined the maintenance cost is justified (e.g., the official image is poorly maintained, insecure, or missing required features).
+- The **platform chart** (`helm/platform/`) is always custom. This is where Hiroba adds value — wiring in databases, storage, secrets, observability, and other infrastructure that the upstream chart does not provide.
+
+**Do not rewrite what upstream already does well.** The people who build the application know it best.
+
+## Repository Structure
+
+```text
+├── helm/
+│   ├── base/                          # Application Helm chart
+│   │   ├── Chart.yaml                 # May declare upstream chart as dependency
+│   │   ├── values.yaml                # Overrides for upstream + custom values
+│   │   ├── values.schema.json         # JSON Schema for values validation (required)
+│   │   ├── templates/                 # Only if extending upstream; otherwise minimal
+│   │   └── tests/                     # helm-unittest test suites
+│   └── platform/                      # Platform dependencies (always custom)
+│       ├── values.yaml
+│       ├── values.schema.json         # JSON Schema for values validation (required)
+│       ├── tests/                     # helm-unittest test suites
+│       └── templates/
+│           ├── database/              # CNPG clusters, etc.
+│           ├── storage/               # S3 buckets (Crossplane, Garage, etc.)
+│           ├── secrets/               # ExternalSecrets
+│           └── observability/         # ServiceMonitors, Grafana dashboards, PrometheusRules
+├── crossplane/                        # Crossplane XRDs & Compositions this app PROVIDES
+│   └── examples/                      # Example Claims for consumers
+├── gitops/
+│   ├── values-base.yaml               # Baseline overrides for helm/base
+│   ├── values-platform.yaml           # Baseline overrides for helm/platform
+│   ├── argocd/                        # ArgoCD Application + AppProject manifests
+│   └── fluxcd/                        # FluxCD GitRepository + HelmRelease manifests
+├── docs/                              # TechDocs content (published via Backstage)
+├── .github/workflows/                 # CI/CD — references 7K-Hiroba/workflows-library
+├── Dockerfile                         # Only if a custom image is maintained
+└── catalog-info.yaml                  # Backstage catalog registration
+```
+
+## Where to Add What
+
+### Application changes (deployment, ports, probes, scaling)
+
+Modify `helm/base/values.yaml` or, if using an upstream chart as a dependency, override values there. Do not duplicate upstream template logic — use the upstream chart's configuration surface.
+
+### Database, storage, secrets, or observability
+
+Add or modify resources under `helm/platform/templates/<category>/`. Each resource is gated by an `enabled` flag in `helm/platform/values.yaml`. Respect the subfolder organization:
+
+| Category | Path | Examples |
+| --- | --- | --- |
+| database | `templates/database/` | CNPG Cluster |
+| storage | `templates/storage/` | S3 via Crossplane, S3 via Garage |
+| secrets | `templates/secrets/` | ExternalSecret |
+| observability | `templates/observability/` | ServiceMonitor, GrafanaDashboard, PrometheusRule |
+
+### New platform provider variant
+
+Platform resources support a `provider` switch. To add a new provider for an existing resource (e.g., a MinIO provider for S3):
+
+1. Create `helm/platform/templates/storage/s3-minio.yaml`
+2. Gate it with `{{- if and .Values.s3.enabled (eq .Values.s3.provider "minio") }}`
+3. Add provider-specific values under `s3.minio:` in `values.yaml`
+
+### Crossplane compositions this app provides
+
+If this application exposes infrastructure that other apps can consume (e.g., a Keycloak deployment providing realm provisioning), add XRDs and Compositions under `crossplane/`. Place example Claims in `crossplane/examples/` so consumers know the API.
+
+### GitOps orchestration
+
+ArgoCD and FluxCD manifests live under `gitops/`. There are separate manifests for base and platform charts because they have different lifecycles — the base chart deploys frequently, platform resources change rarely.
+
+```text
+gitops/
+├── values-base.yaml              # Baseline Helm overrides for helm/base
+├── values-platform.yaml          # Baseline Helm overrides for helm/platform
+├── argocd/
+│   ├── project.yaml              # AppProject scoping source repos and namespace
+│   └── application.yaml          # <app>-base (auto-sync) + <app>-platform (manual)
+└── fluxcd/
+    ├── git-repository.yaml       # GitRepository source
+    ├── helmrelease-base.yaml     # HelmRelease for helm/base
+    └── helmrelease-platform.yaml # HelmRelease for helm/platform
+```
+
+Edit `values-base.yaml` and `values-platform.yaml` to set hostnames, resource limits, and feature flags. When deploying via a stack repo, copy these files into the stack's `apps/<app>/` directory.
+
+### Documentation
+
+All docs go under `docs/` and are published via Docusaurus. Keep docs in Markdown.
+If updating the helm chart, be sure the corresponding README.md is also updated
+
+### CI/CD workflows
+
+There are two workflow files — `ci.yml` and `release-please.yml` — each calling a **single reusable workflow** from `7K-Hiroba/workflows-library` with a `stack` parameter to differentiate behavior. Do not inline CI/CD logic — add capabilities to the library workflow instead.
+
+| Stack | `stack` param | CI trigger (path) | Release tag | release-please type |
+| --- | --- | --- | --- | --- |
+| App (Dockerfile) | `app` | `Dockerfile`, `src/` | `app/v*` | `simple` |
+| Helm Base | `helm` | `helm/base/` | `helm-base/v*` | `helm` (bumps Chart.yaml) |
+| Helm Platform | `helm` | `helm/platform/` | `helm-platform/v*` | `helm` (bumps Chart.yaml) |
+| Docs | `docs` | `docs/` | `docs/v*` | `simple` |
+| Crossplane | `crossplane` | `crossplane/` | `crossplane/v*` | `simple` |
+
+**CI** (`ci.yml`) — jobs run conditionally based on which paths changed. The library workflow decides what to do based on `stack`: lint+template+unittest+test for `helm`, build+scan for `app`, validate for `crossplane`, etc.
+
+**Releases** (`release-please.yml`) — fully automated via [release-please](https://github.com/googleapis/release-please). On every push to `main`, release-please reads conventional commits, determines which stacks need a release, and opens separate release PRs per component. When a release PR is merged, it creates the tag + GitHub Release and triggers the publish job for that stack.
+
+**Commit messages drive versioning** — use [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `fix(helm-base): correct probe path` → patch bump
+- `feat(app): add health endpoint` → minor bump
+- `feat(helm-platform)!: change CNPG API version` → major bump (breaking `!`)
+
+The scope in the commit message should match the component path or name. Release-please uses path-based detection to assign commits to components.
+
+**Configuration files:**
+
+- `release-please-config.json` — component definitions, release types, changelog settings
+- `.release-please-manifest.json` — tracks current version per component (committed by release-please)
+
+## Technical Specifics
+
+### API versions
+
+- Prefer the **latest stable (GA) API version** for every resource. Avoid `v1alphaN` / `v1betaN` when a GA `v1` (or newer) exists upstream.
+- When an upstream operator promotes an API to GA, update the template, the `_checks.yaml` capability probe, and any `helm unittest` fixtures together so they stay in sync.
+- Only fall back to alpha/beta when upstream ships no GA version (e.g. `argoproj.io/v1alpha1` for Argo CD Application, `backstage.io/v1alpha1` for Backstage catalog entities).
+
+### Helm
+
+- API version: `apiVersion: v2`
+- Template content comes from the `hiroba-app-lib` / `hiroba-platform-lib` library charts declared in `dependencies:` of each `Chart.yaml`. Each `templates/<resource>.yaml` is a thin `{{ include "hiroba-app.<resource>" . }}` (or `hiroba-platform.<resource>`) wrapper. To diverge from the library for a single resource, replace its wrapper file with bespoke YAML.
+- Run `helm dependency update helm/base helm/platform` before linting or rendering locally — CI does this automatically.
+- All resources use `app.kubernetes.io/*` standard labels via the library helpers
+- All resources include `app.kubernetes.io/part-of: hiroba` for traceability
+- Security defaults: `runAsNonRoot: true`, `readOnlyRootFilesystem: true`, all capabilities dropped
+- External traffic uses **Gateway API** (`gateway.networking.k8s.io/v1` HTTPRoute), not Ingress
+- Every chart **must** include a `values.schema.json` — CI will fail without it. Helm lint and template rendering validate values against this schema automatically
+- Every chart **must** include unit tests under `tests/` using [helm-unittest](https://github.com/helm-unittest/helm-unittest). Test files follow the naming convention `<template>_test.yaml`
+
+### Chart icons
+
+When setting the `icon:` field in `Chart.yaml`, look up the application on [selfh.st/icons](https://selfh.st/icons/) and use the SVG URL if available (e.g., `https://cdn.jsdelivr.net/gh/selfhst/icons/svg/<app>.svg`). If the application is not listed there, omit the `icon:` field entirely — do not substitute a generic icon or guess a URL.
+
+### Values schema conventions
+
+- Use [JSON Schema draft-07](https://json-schema.org/draft-07/schema#)
+- Set `additionalProperties: false` on key objects to catch typos
+- Mark essential fields as `required` (e.g., `image`, `service`, `global.appName`)
+- Use `enum` for fields with a fixed set of values (e.g., `pullPolicy`, `provider`)
+- When adding a new value to `values.yaml`, always add the corresponding entry in `values.schema.json`
+
+### Unit test conventions
+
+- Tests live in `tests/` inside each chart directory
+- One test file per template: `<template>_test.yaml`
+- Each test file declares `suite`, `templates`, and a list of `tests`
+- For platform chart tests, set `capabilities.apiVersions` to satisfy the CRD checks invoked by `templates/checks.yaml`
+- Test both the default state (enabled/disabled) and customized values
+- Test conditional rendering (e.g., resource created when enabled, absent when disabled)
+- Run `helm dependency update` for the chart under test before invoking `helm unittest`
+
+### Platform chart conventions
+
+- Every resource must be gated behind `<resource>.enabled` (default `false`)
+- Resources with multiple backends must use a `<resource>.provider` switch
+- Wrapper files are named `<resource>-<provider>.yaml` inside the appropriate subfolder
+- Use the `hiroba-platform.name` and `hiroba-platform.labels` helpers from the library — additions to either helper go in `helm/lib/platform/templates/_helpers.tpl` in the Hiroba repo, not here
+
+### Container images
+
+- Prefer the official upstream image. Only build custom if justified.
+- If custom: multi-stage build, non-root user (UID 1000), pinned base image versions, OCI labels
+- Never use `:latest` tags
+
+### Gateway API
+
+- Use `gateway.networking.k8s.io/v1` HTTPRoute (not Ingress)
+- Routes reference a parent Gateway via `parentRefs`
+- Default is a catch-all PathPrefix `/` route to the Service
+
+### External Secrets
+
+- Use `external-secrets.io/v1` ExternalSecret
+- Reference a `ClusterSecretStore` by default
+- Map individual keys via `data[]` or bulk-import via `dataFrom[]`
+
+### Observability
+
+- ServiceMonitor for Prometheus scraping (requires prometheus-operator)
+- Grafana dashboards deployed as ConfigMaps with `grafana_dashboard: "1"` label (sidecar discovery)
+- PrometheusRules for alerting (error rate, latency)
+
+## Dependency Management
+
+[Renovate](https://docs.renovatebot.com/) is configured via `renovate.json5` to automatically open PRs when dependencies have new versions. It tracks:
+
+- **Dockerfile base images** (e.g., `node:20-alpine`, `distroless` runtime)
+- **GitHub Actions** versions in `.github/workflows/`
+- **Container images in Helm values** (e.g., `imageName: ghcr.io/cloudnative-pg/postgresql:16.2` in platform chart)
+
+Package rules group related updates into single PRs:
+
+| Group | Includes | Commit prefix |
+| --- | --- | --- |
+| `docker-base-images` | Dockerfile FROM image bumps | `fix(docker):` |
+| `github-actions` | All GitHub Actions version bumps | `ci:` |
+| (ungrouped) | Platform chart image updates | `fix(helm-platform):` |
+
+When Renovate opens a PR for a Dockerfile base image update, verify the new image is compatible with your build and runtime requirements. Helm values image updates (e.g., PostgreSQL) should be tested on a cluster before merging.
+
+## OpenCode Skills
+
+Agent skills for this repository are maintained centrally in the [Hiroba](https://github.com/7K-Hiroba/Hiroba) repo under `.opencode/skills/`. Skills enforce standards when editing charts, Dockerfiles, GitOps manifests, and documentation.
+
+To install them locally so they are available when working in this repo:
+
+```bash
+git clone https://github.com/7K-Hiroba/Hiroba /tmp/hiroba
+mkdir -p .opencode/skills
+for skill in /tmp/hiroba/.opencode/skills/*/; do
+  ln -sf "$skill" .opencode/skills/
+done
+```
+
+Available skills and when they apply:
+
+| Skill | Use when… |
+| --- | --- |
+| `helm-base` | Editing `helm/base/` templates, values, or schema |
+| `helm-platform` | Editing `helm/platform/` templates, values, or schema |
+| `cnpg-cluster` | Adding or modifying a CNPG `Cluster` resource |
+| `crossplane-s3` | Adding or modifying S3 storage resources |
+| `garage-s3` | Working with the Garage S3 provider (garage-operator CRDs) specifically |
+| `external-secrets` | Adding or modifying `ExternalSecret` resources |
+| `observability` | Adding or modifying ServiceMonitor, PrometheusRules, or Grafana dashboards |
+| `gitops` | Editing ArgoCD or FluxCD manifests under `gitops/` |
+| `helm-chart-release` | Preparing a chart release, writing commit messages, versioning |
+| `dockerfile` | Creating or modifying a `Dockerfile` |
+| `documentation` | Creating or editing Markdown files under `docs/` |
+
+If this repo requires standards not covered by the Hiroba baseline, add a skill directly in `.opencode/skills/<name>/SKILL.md` alongside the symlinks and open a PR to Hiroba to include it upstream.
+
+## Markdown Linting
+
+CI runs [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) on every pull request. Any violation fails the build.
+
+**After creating or editing any `.md` file, you must run the linter before committing:**
+
+```bash
+npx markdownlint-cli2 "**/*.md"
+```
+
+- Rules are configured in `.markdownlint.yaml` at the repository root.
+- Fix every reported error. Do not disable rules inline or in config to silence warnings — fix the underlying markup instead.
+- Common issues: fenced code blocks without a language tag (MD040), table separator rows missing spaces around pipes (MD060), missing blank lines before/after lists and headings (MD032, MD022), and duplicate heading text across sections (MD024).
+- If you add a new Markdown file, ensure it starts with a top-level `# Heading` (MD041).
+- Run the linter again after making fixes to confirm zero errors before committing.

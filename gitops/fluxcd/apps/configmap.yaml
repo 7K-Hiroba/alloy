@@ -1,0 +1,14 @@
+# ConfigMap for non-sensitive alloy configuration.
+#
+# Secrets are managed via ExternalSecrets.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: alloy
+  labels:
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/part-of: hiroba
+data:
+  NODE_ENV: production
+  PORT: "3333"

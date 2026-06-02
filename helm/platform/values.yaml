@@ -1,0 +1,28 @@
+# Platform values for Alloy
+
+global:
+  appName: alloy
+
+# Observability
+observability:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+  grafanaDashboard:
+    enabled: true
+  prometheusRules:
+    enabled: true
+
+# Database - disabled (using upstream managed resources)
+database:
+  enabled: false
+  type: cnpg
+
+# S3 Storage - disabled (using upstream managed resources)
+s3:
+  enabled: false
+  provider: crossplane
+
+# Secrets
+secrets:
+  enabled: false

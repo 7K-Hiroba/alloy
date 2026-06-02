@@ -1,0 +1,38 @@
+apiVersion: v2
+name: ${{ values.name }}-platform
+description: Platform dependencies for ${{ values.name }} — provisions databases, storage, and identity resources
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.24.0-0"
+dependencies:
+  # Renovate keeps this in sync with the latest hiroba-platform-lib release
+  # published from https://github.com/7K-Hiroba/Hiroba
+  - name: hiroba-platform-lib
+    version: ^0.1.0
+    repository: oci://harbor.7kgroup.org/7khiroba/charts
+maintainers:
+  - name: 7k-hiroba
+keywords:
+  - platform
+  - crossplane
+  - cnpg
+  - hiroba
+home: https://github.com/7K-Hiroba/${{ values.name }}
+sources:
+  - https://github.com/7K-Hiroba/${{ values.name }}
+annotations:
+  artifacthub.io/category: monitoring-logging
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/links: |
+    - name: documentation
+      url: https://hiroba.7kgroup.org/docs/apps/${{ values.name }}/helm-platform
+    - name: source
+      url: https://github.com/7K-Hiroba/${{ values.name }}
+    - name: support
+      url: https://github.com/7K-Hiroba/${{ values.name }}/issues
+  artifacthub.io/images: |
+    - name: ${{ values.name }}-platform
+      image: https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/${{ values.name }}.svg
+  artifacthub.io/maintainers: |
+    - name: 7k-hiroba

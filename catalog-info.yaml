@@ -1,0 +1,18 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: alloy
+  title: Alloy
+  description: Grafana Alloy telemetry collector
+  
+  annotations:
+    github.com/project-slug: 7K-Hiroba/alloy
+    backstage.io/techdocs-ref: dir:./docs
+    hiroba.7kgroup.org/template-version: 0.2.0
+  tags:
+    - kubernetes
+    - observability
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:platform

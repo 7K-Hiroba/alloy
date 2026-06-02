@@ -1,0 +1,72 @@
+# FluxCD HelmRelease for the alloy platform chart.
+#
+# The platform chart manages operator-backed infrastructure — databases, storage,
+# secrets, and observability. Changes to these resources carry higher risk, so
+# this release is NOT automatically reconciled:
+#
+#   suspend: false   — change to true to pause reconciliation while investigating
+#   interval: 30m    — longer poll interval discourages unreviewed changes
+#
+# Review the diff carefully before manually triggering a sync:
+#   flux reconcile helmrelease alloy-platform -n flux-system
+#
+# Usage:
+#   kubectl apply -f gitops/fluxcd/git-repository.yaml   # once per cluster
+#   kubectl apply -f gitops/fluxcd/helmrelease-platform.yaml
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: alloy-platform
+  namespace: flux-system
+  labels:
+    app.kubernetes.io/part-of: hiroba
+    app.kubernetes.io/component: platform
+spec:
+  interval: 30m
+  suspend: false
+  dependsOn:
+    - name: alloy-base
+      namespace: flux-system
+  chart:
+    spec:
+      chart: ./helm/platform
+      sourceRef:
+        kind: GitRepository
+        name: alloy
+        namespace: flux-system
+      interval: 30m
+  targetNamespace: alloy
+  install:
+    createNamespace: true
+    remediation:
+      retries: 1
+  upgrade:
+    remediation:
+      retries: 1
+  # Baseline values — override here or via valuesFrom for env-specific config.
+  # See gitops/values-platform.yaml for the full commented reference.
+  valuesFrom:
+    - kind: ConfigMap
+      name: alloy-platform-values
+      optional: true
+  values:
+    global:
+      appName: alloy
+      baseInstance: ""
+    postgres:
+      enabled: ${{ values.enablePostgres }}
+      # instances: 1
+      # storage:
+      #   size: 10Gi
+      # backup:
+      #   enabled: true
+      #   schedule: "0 2 * * *"
+      #   retentionPolicy: "7d"
+      #   garage:
+      #     clusterRef: garage
+      #     endpoint: "http://garage.garage.svc.cluster.local:3900"
+    s3:
+      enabled: ${{ values.enableS3 }}
+    observability:
+      serviceMonitor:
+        enabled: false

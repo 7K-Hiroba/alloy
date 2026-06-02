@@ -1,0 +1,13 @@
+# Namespace for alloy.
+#
+# Enforces restricted Pod Security Standards.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: alloy
+  labels:
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/part-of: hiroba
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
