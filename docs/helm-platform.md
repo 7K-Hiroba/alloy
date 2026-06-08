@@ -231,7 +231,7 @@ observability:
 
 Dashboards are loaded from `helm/platform/dashboards/*.json`. Each JSON file becomes a key in the ConfigMap and is run through Helm's `tpl` function, so you can reference chart helpers inside the JSON — use backtick-quoted args for `include` (e.g. ``{{ include `hiroba-platform.name` . }}``) since JSON escapes break inside Go template actions. Drop additional dashboards into the directory and they ship alongside the default.
 
-<!-- TODO: Replace the default dashboard JSON with panels that match the metrics your app actually emits. -->
+The default dashboard includes panels for Alloy-specific metrics: config health, component evaluation latency, resource usage, and Go runtime metrics.
 
 ### PrometheusRules
 
@@ -244,19 +244,19 @@ observability:
     groups:
       - name: '{{ include "hiroba-platform.name" . }}.rules'
         rules:
-          - alert: HighErrorRate
+          - alert: AlloyConfigLoadFailure
             expr: |
-              sum(rate(http_requests_total{service="{{ include "hiroba-platform.name" . }}", status=~"5.."}[5m])) > 0.05
+              sum(rate(alloy_config_load_failures_total{namespace="{{ .Release.Namespace }}"}[5m])) > 0
             for: 5m
             labels:
               severity: warning
             annotations:
-              summary: "High error rate"
+              summary: "Alloy configuration load failures detected"
 ```
 
 Override the whole list to replace the built-in alerts, or append to extend them. Requires the Prometheus Operator CRDs.
 
-<!-- TODO: The default alerts assume `http_requests_total` / `http_request_duration_seconds_bucket` metric names. Replace them with alerts based on metrics your app actually exposes, or switch to kube-state-metrics based checks (`kube_pod_container_status_restarts_total`, `up == 0`) for a generic baseline. -->
+The default alert examples use Alloy-specific metrics (`alloy_config_load_failures_total`, `alloy_component_evaluation_seconds_bucket`, `alloy_resources_process_resident_memory_bytes`).
 
 ## What this chart does NOT install
 

@@ -166,25 +166,30 @@ observability:
     groups: []
     #   - name: '{{ include "hiroba-platform.name" . }}.rules'
     #     rules:
-    #       - alert: HighErrorRate
+    #       - alert: AlloyConfigLoadFailure
     #         expr: |
-    #           sum(rate(http_requests_total{namespace="{{ .Release.Namespace }}", service="{{ include "hiroba-platform.name" . }}", status=~"5.."}[5m]))
-    #           /
-    #           sum(rate(http_requests_total{namespace="{{ .Release.Namespace }}", service="{{ include "hiroba-platform.name" . }}"}[5m]))
-    #           > 0.05
+    #           sum(rate(alloy_config_load_failures_total{namespace="{{ .Release.Namespace }}"}[5m])) > 0
     #         for: 5m
     #         labels:
     #           severity: warning
     #         annotations:
-    #           summary: 'High error rate for {{ include "hiroba-platform.name" . }}'
-    #           description: "Error rate is above 5% for the last 5 minutes."
-    #       - alert: HighLatency
+    #           summary: 'Alloy config load failures detected'
+    #           description: "Alloy is failing to load its configuration."
+    #       - alert: AlloyHighComponentEvaluationLatency
     #         expr: |
-    #           histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{namespace="{{ .Release.Namespace }}", service="{{ include "hiroba-platform.name" . }}"}[5m]))
-    #           > 1
+    #           histogram_quantile(0.99, sum(rate(alloy_component_evaluation_seconds_bucket{namespace="{{ .Release.Namespace }}"}[5m])) by (le)) > 1
     #         for: 5m
     #         labels:
     #           severity: warning
     #         annotations:
-    #           summary: 'High p99 latency for {{ include "hiroba-platform.name" . }}'
-    #           description: "p99 latency is above 1 second for the last 5 minutes."
+    #           summary: 'High component evaluation latency for Alloy'
+    #           description: "p99 component evaluation latency is above 1 second."
+    #       - alert: AlloyHighMemoryUsage
+    #         expr: |
+    #           alloy_resources_process_resident_memory_bytes{namespace="{{ .Release.Namespace }}"} / 1024 / 1024 > 450
+    #         for: 5m
+    #         labels:
+    #           severity: warning
+    #         annotations:
+    #           summary: 'Alloy memory usage is high'
+    #           description: "Alloy memory usage is above 450MiB."
