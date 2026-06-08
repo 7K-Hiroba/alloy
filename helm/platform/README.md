@@ -2,7 +2,7 @@
 
 Platform dependencies for alloy — provisions databases, storage, and identity resources
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square)  ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)  ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square)  ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)  ![AppVersion: v1.16.2](https://img.shields.io/badge/AppVersion-v1.16.2-informational?style=flat-square)
 
 Install this **alongside** the base chart, typically in the same namespace.**Documentation:** <https://hiroba.7kgroup.org/docs/apps/alloy/helm-platform>
 
@@ -101,7 +101,7 @@ Kubernetes: `>=1.24.0-0`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| externalSecrets | object | `{"data":[],"dataFrom":[],"enabled":false,"refreshInterval":"1h","storeRef":{"kind":"ClusterSecretStore","name":"cluster-secret-store"},"target":{"template":{}}}` | External Secrets (external-secrets.io) |
+| externalSecrets | object | `{"data":[],"dataFrom":[],"enabled":false,"refreshInterval":"1h","storeRef":{"kind":"ClusterSecretStore","name":"cluster-secret-store"},"target":{"template":{}}}` | External Secrets (external-secrets.io) External Secrets - disabled (not needed for Alloy) |
 | externalSecrets.data | list | `[]` | Individual secret mappings |
 | externalSecrets.dataFrom | list | `[]` | Pull all keys from a remote path |
 | externalSecrets.refreshInterval | string | `"1h"` | How often to sync secrets |
@@ -109,17 +109,17 @@ Kubernetes: `>=1.24.0-0`
 | externalSecrets.target | object | `{"template":{}}` | Optional target Secret template for value transformation. See https://external-secrets.io/latest/guides/templating/ |
 | global.appName | string | `"alloy"` | Application name, used as prefix for all platform resources |
 | global.baseInstance | string | `""` | Release name of the base chart deployment. When set, the ServiceMonitor selector matches `app.kubernetes.io/instance: <baseInstance>` so multiple releases of the same app coexist safely. Leave empty to match by name only. |
-| observability | object | `{"grafanaDashboard":{"enabled":false,"folderLabel":""},"prometheusRules":{"enabled":false,"groups":[{"name":"{{ include \"hiroba-platform.name\" . }}.rules","rules":[{"alert":"HighErrorRate","annotations":{"description":"Error rate is above 5% for the last 5 minutes.","summary":"High error rate for {{ include \"hiroba-platform.name\" . }}"},"expr":"sum(rate(http_requests_total{namespace=\"{{ .Release.Namespace }}\", service=\"{{ include \"hiroba-platform.name\" . }}\", status=~\"5..\"}[5m]))\n/\nsum(rate(http_requests_total{namespace=\"{{ .Release.Namespace }}\", service=\"{{ include \"hiroba-platform.name\" . }}\"}[5m]))\n> 0.05\n","for":"5m","labels":{"severity":"warning"}},{"alert":"HighLatency","annotations":{"description":"p99 latency is above 1 second for the last 5 minutes.","summary":"High p99 latency for {{ include \"hiroba-platform.name\" . }}"},"expr":"histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{namespace=\"{{ .Release.Namespace }}\", service=\"{{ include \"hiroba-platform.name\" . }}\"}[5m]))\n> 1\n","for":"5m","labels":{"severity":"warning"}}]}]},"serviceMonitor":{"additionalLabels":{},"enabled":false,"interval":"30s","path":"/metrics","port":"http","scrapeTimeout":"10s"}}` | Observability resources |
-| observability.grafanaDashboard | object | `{"enabled":false,"folderLabel":""}` | Grafana dashboard (deployed as ConfigMap with sidecar label) |
+| observability | object | `{"grafanaDashboard":{"enabled":true,"folderLabel":""},"prometheusRules":{"enabled":true,"groups":[]},"serviceMonitor":{"additionalLabels":{},"enabled":true,"interval":"30s","path":"/metrics","port":"http-metrics","scrapeTimeout":"10s"}}` | Observability resources |
+| observability.grafanaDashboard | object | `{"enabled":true,"folderLabel":""}` | Grafana dashboard (deployed as ConfigMap with sidecar label) |
 | observability.grafanaDashboard.folderLabel | string | `""` | Grafana folder label |
-| observability.prometheusRules | object | `{"enabled":false,"groups":[{"name":"{{ include \"hiroba-platform.name\" . }}.rules","rules":[{"alert":"HighErrorRate","annotations":{"description":"Error rate is above 5% for the last 5 minutes.","summary":"High error rate for {{ include \"hiroba-platform.name\" . }}"},"expr":"sum(rate(http_requests_total{namespace=\"{{ .Release.Namespace }}\", service=\"{{ include \"hiroba-platform.name\" . }}\", status=~\"5..\"}[5m]))\n/\nsum(rate(http_requests_total{namespace=\"{{ .Release.Namespace }}\", service=\"{{ include \"hiroba-platform.name\" . }}\"}[5m]))\n> 0.05\n","for":"5m","labels":{"severity":"warning"}},{"alert":"HighLatency","annotations":{"description":"p99 latency is above 1 second for the last 5 minutes.","summary":"High p99 latency for {{ include \"hiroba-platform.name\" . }}"},"expr":"histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{namespace=\"{{ .Release.Namespace }}\", service=\"{{ include \"hiroba-platform.name\" . }}\"}[5m]))\n> 1\n","for":"5m","labels":{"severity":"warning"}}]}]}` | PrometheusRule alerts. `groups` is passed through `tpl` so values can reference `.Release.Namespace`, `include "hiroba-platform.name" .`, etc. Override entirely to replace the defaults, or append to extend them. |
-| observability.serviceMonitor | object | `{"additionalLabels":{},"enabled":false,"interval":"30s","path":"/metrics","port":"http","scrapeTimeout":"10s"}` | Prometheus ServiceMonitor |
+| observability.prometheusRules | object | `{"enabled":true,"groups":[]}` | PrometheusRule alerts. `groups` is passed through `tpl` so values can reference `.Release.Namespace`, `include "hiroba-platform.name" .`, etc. Override entirely to replace the defaults, or append to extend them. |
+| observability.serviceMonitor | object | `{"additionalLabels":{},"enabled":true,"interval":"30s","path":"/metrics","port":"http-metrics","scrapeTimeout":"10s"}` | Prometheus ServiceMonitor |
 | observability.serviceMonitor.additionalLabels | object | `{}` | Additional labels for ServiceMonitor discovery (e.g., release: kube-prometheus-stack) |
 | observability.serviceMonitor.interval | string | `"30s"` | Scrape interval |
 | observability.serviceMonitor.path | string | `"/metrics"` | Metrics endpoint path |
-| observability.serviceMonitor.port | string | `"http"` | Service port name to scrape |
+| observability.serviceMonitor.port | string | `"http-metrics"` | Service port name to scrape |
 | observability.serviceMonitor.scrapeTimeout | string | `"10s"` | Scrape timeout |
-| postgres | object | `{"backup":{"bucketName":"","credentialsSecret":{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"},"enabled":false,"endpoint":"http://garage.garage.svc.cluster.local:3900","retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":"false","imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database |
+| postgres | object | `{"backup":{"bucketName":"","credentialsSecret":{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"},"enabled":false,"endpoint":"http://garage.garage.svc.cluster.local:3900","retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":false,"imageName":"ghcr.io/cloudnative-pg/postgresql:18.4","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database PostgreSQL - disabled (not needed for Alloy) |
 | postgres.backup | object | `{"bucketName":"","credentialsSecret":{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"},"enabled":false,"endpoint":"http://garage.garage.svc.cluster.local:3900","retentionPolicy":"7d","schedule":"0 2 * * *"}` | Backup configuration (optional) |
 | postgres.backup.bucketName | string | `""` | S3 bucket name for backups (defaults to <app>-pg-backups) |
 | postgres.backup.credentialsSecret | object | `{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"}` | Pre-existing secret containing S3 credentials |
@@ -129,10 +129,10 @@ Kubernetes: `>=1.24.0-0`
 | postgres.backup.credentialsSecret.secretKeyKey | string | `"secretAccessKey"` | Key in the secret for the secret access key |
 | postgres.backup.endpoint | string | `"http://garage.garage.svc.cluster.local:3900"` | S3 API endpoint for backups |
 | postgres.database | string | `"app"` | Database name to create |
-| postgres.imageName | string | `"ghcr.io/cloudnative-pg/postgresql:16.2"` | PostgreSQL version |
+| postgres.imageName | string | `"ghcr.io/cloudnative-pg/postgresql:18.4"` | PostgreSQL version |
 | postgres.owner | string | `"app"` | Database owner |
 | postgres.provider | string | `"cnpg"` | Provider: "cnpg" (CloudNativePG operator) |
-| s3 | object | `{"buckets":[{"acl":"private","name":"assets"}],"crossplane":{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"},"enabled":"false","garage":{"clusterRef":"garage","clusterRefNamespace":"","lifecycle":{},"quotas":{},"website":{}},"provider":"crossplane"}` | S3-compatible object storage buckets |
+| s3 | object | `{"buckets":[{"acl":"private","name":"assets"}],"crossplane":{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"},"enabled":false,"garage":{"clusterRef":"garage","clusterRefNamespace":"","lifecycle":{},"quotas":{},"website":{}},"provider":"crossplane"}` | S3-compatible object storage buckets S3 Storage - disabled (not needed for Alloy) |
 | s3.buckets | list | `[{"acl":"private","name":"assets"}]` | List of S3 buckets to provision. All use the same provider. |
 | s3.buckets[0] | object | `{"acl":"private","name":"assets"}` | Bucket name (will be prefixed with app name) |
 | s3.buckets[0].acl | string | `"private"` | Bucket ACL |
@@ -175,3 +175,5 @@ Tip: do a dry run with `helm uninstall --dry-run` first to see what *will* be re
 
 Scaffolded with [Hiroba](https://github.com/7K-Hiroba/Hiroba).
 
+----------------------------------------------
+Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)
