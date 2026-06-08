@@ -1,8 +1,8 @@
-# Production overlay values for the ${{ values.name }} platform chart.
+# Production overlay values for the alloy platform chart.
 #
 # Full HA with 3-instance PostgreSQL cluster, Redis cluster, backups.
 postgres:
-  enabled: ${{ values.enablePostgres }}
+  enabled: false
   instances: 3
   storage:
     size: 50Gi
@@ -19,7 +19,7 @@ postgres:
     retentionPolicy: "30d"
 
 redis:
-  enabled: ${{ values.enablePostgres }}
+  enabled: false
   dragonfly:
     replicas: 3
     resources:

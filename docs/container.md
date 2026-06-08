@@ -4,45 +4,32 @@ sidebar_position: 2
 
 # Container image
 
-The application ships as an OCI image built from the root [`Dockerfile`](https://github.com/7KGroup/${{ values.name }}/blob/main/Dockerfile). The scaffolded template uses a two-stage build (builder + distroless runtime); adjust the build stage to match your language and toolchain.
+This application uses the **upstream** Grafana Alloy container image (`grafana/alloy`). No custom Dockerfile is maintained in this repository.
 
-## Build stages
+## Upstream image
 
-The template's Dockerfile has two stages:
+| Field | Value |
+| ----- | ----- |
+| Image | `grafana/alloy` |
+| Registry | `docker.io` |
+| Source | <https://github.com/grafana/alloy> |
 
-- **Builder** — pulls dependencies and compiles the application. Replace the base image (`node:20-alpine` by default) and commands with whatever your stack needs.
-- **Runtime** — copies only the compiled artefacts into a distroless image (`gcr.io/distroless/nodejs20-debian12:nonroot`). The runtime has no shell, no package manager, and runs as a non-root user.
+The image tag is pinned in `helm/base/Chart.yaml` (`appVersion`) and pulled by the upstream Helm chart dependency.
 
-## Build locally
+## Image updates
 
-```bash
-docker build -t ghcr.io/7k-hiroba/${{ values.name }}:dev .
-docker run --rm -p 8080:8080 ghcr.io/7k-hiroba/${{ values.name }}:dev
-```
+[Renovate](https://docs.renovatebot.com/) watches the upstream image and opens PRs when new versions are released. When merging an image bump:
 
-## Image labels
-
-Labels are populated from the template at scaffold time:
-
-| Label                                           | Value                                                    |
-| ----------------------------------------------- | -------------------------------------------------------- |
-| `maintainer`                                    | `7KGroup <https://github.com/7KGroup>`                   |
-| `org.opencontainers.image.source`               | `https://github.com/7KGroup/${{ values.name }}`          |
-| `org.opencontainers.image.description`          | `${{ values.description }}`                              |
-
-<!-- TODO: Add more OCI labels (version, revision, created) once your CI wiring is in place. -->
-
-## Publishing
-
-Images are built and published by the CI workflows under `.github/workflows/`, which reference the centralized [workflow-library](https://github.com/7K-Hiroba/workflows-library). The default target is `ghcr.io/7k-hiroba/${{ values.name }}`.
+1. Update `helm/base/Chart.yaml` `appVersion` to match the new Alloy version
+2. Update `helm/base/Chart.yaml` `dependencies[0].version` if the upstream Helm chart also changed
+3. Run `helm dependency update helm/base`
+4. Review upstream changelog for breaking changes
 
 ## Runtime expectations
 
-The Helm base chart assumes:
+The upstream Helm chart handles:
 
-- Container listens on port `8080` (override `service.targetPort` if yours differs)
-- Process runs as UID `1000` (distroless `nonroot` matches this)
-- Root filesystem is read-only — write to `/tmp` or a mounted volume only
-- Health endpoints at `/healthz` (liveness) and `/readyz` (readiness)
-
-<!-- TODO: Document any other runtime expectations your app imposes (env vars, mount points, signals). -->
+- Container runs as non-root (UID varies by upstream image)
+- Metrics endpoint on port `12345` (path `/metrics`)
+- Health endpoint on `/-/ready`
+- Config mounted at `/etc/alloy/config.alloy`

@@ -29,20 +29,18 @@
       "depNameTemplate": "7K-Hiroba/Hiroba",
       "datasourceTemplate": "github-tags",
       "extractVersionTemplate": "^app-template-v(?<version>.+)$"
-    }
-    {%- if values.upstreamImage %},
+    },
     {
       "customType": "regex",
-      "description": "Track upstream ${{ values.upstreamImage }} image via Chart.yaml appVersion",
+      "description": "Track upstream grafana/alloy image via Chart.yaml appVersion",
       "managerFilePatterns": ["/helm/(base|platform)/Chart\\.yaml$/"],
       "matchStrings": [
         "appVersion:\\s*\"?(?<currentValue>[^\"\\s]+)\"?"
       ],
-      "depNameTemplate": "${{ values.upstreamImage }}",
+      "depNameTemplate": "grafana/alloy",
       "datasourceTemplate": "docker",
       "versioningTemplate": "docker"
     }
-    {%- endif %}
   ],
 
   "packageRules": [
@@ -65,16 +63,20 @@
       "groupName": "hiroba-template",
       "semanticCommitType": "fix",
       "semanticCommitScope": "hiroba"
-    }
-    {%- if values.upstreamImage %},
+    },
     {
-      "description": "Bump both charts together when upstream ${{ values.upstreamImage }} image moves",
-      "matchPackageNames": ["${{ values.upstreamImage }}"],
-      "groupName": "${{ values.name }}-upstream",
+      "description": "Bump both charts together when upstream grafana/alloy image moves",
+      "matchPackageNames": ["grafana/alloy"],
+      "groupName": "alloy-upstream",
       "semanticCommitType": "fix",
       "semanticCommitScope": "helm"
-    }
-    {%- endif %},
+    },
+    {
+      "description": "Base chart dependency updates",
+      "matchFileNames": ["helm/base/**"],
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "helm-base"
+    },
     {
       "description": "Platform chart dependency updates",
       "matchFileNames": ["helm/platform/**"],

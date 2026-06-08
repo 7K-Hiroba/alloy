@@ -5,6 +5,9 @@ tests:
   - it: fails when postgres is enabled without CNPG CRD
     set:
       postgres.enabled: true
+      postgres.backup.enabled: false
+      observability.serviceMonitor.enabled: false
+      observability.prometheusRules.enabled: false
     capabilities:
       apiVersions: []
     asserts:
@@ -14,27 +17,39 @@ tests:
   - it: fails when s3 provider is crossplane without Crossplane S3 CRD
     set:
       s3.enabled: true
-      s3.provider: crossplane
+      s3.buckets:
+        - name: assets
+          provider: crossplane
+      observability.serviceMonitor.enabled: false
+      observability.prometheusRules.enabled: false
     capabilities:
       apiVersions: []
     asserts:
       - failedTemplate:
-          errorMessage: "s3.enabled is true with provider 'crossplane' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS S3 provider first, or switch to provider=garage, or set s3.enabled=false."
+          errorMessage: "s3.enabled is true with at least one bucket using provider 'crossplane' but the Crossplane S3 CRD (s3.aws.crossplane.io/v1beta1) is not installed. Install Crossplane with the AWS S3 provider first, or switch to provider=garage, or set s3.enabled=false."
 
   - it: fails when s3 provider is garage without Garage Operator CRD
     set:
       s3.enabled: true
-      s3.provider: garage
+      s3.buckets:
+        - name: assets
+          provider: garage
+      observability.serviceMonitor.enabled: false
+      observability.prometheusRules.enabled: false
     capabilities:
       apiVersions: []
     asserts:
       - failedTemplate:
-          errorMessage: "s3.enabled is true with provider 'garage' but the Garage Operator CRD (garage.rajsingh.info/v1beta1) is not installed. Install the garage-operator first (helm install garage-operator oci://ghcr.io/rajsinghtech/charts/garage-operator), or switch to provider=crossplane, or set s3.enabled=false."
+          errorMessage: "s3.enabled is true with at least one bucket using provider 'garage' but the Garage Operator CRD (garage.rajsingh.info/v1beta1) is not installed. Install the garage-operator first (helm install garage-operator oci://ghcr.io/rajsinghtech/charts/garage-operator), or set s3.enabled=false."
 
   - it: passes for s3 garage provider with Garage Operator CRD installed
     set:
       s3.enabled: true
-      s3.provider: garage
+      s3.buckets:
+        - name: assets
+          provider: garage
+      observability.serviceMonitor.enabled: false
+      observability.prometheusRules.enabled: false
     capabilities:
       apiVersions:
         - garage.rajsingh.info/v1beta1
@@ -45,7 +60,11 @@ tests:
   - it: passes for s3 crossplane provider with Crossplane S3 CRD installed
     set:
       s3.enabled: true
-      s3.provider: crossplane
+      s3.buckets:
+        - name: assets
+          provider: crossplane
+      observability.serviceMonitor.enabled: false
+      observability.prometheusRules.enabled: false
     capabilities:
       apiVersions:
         - s3.aws.crossplane.io/v1beta1
@@ -56,6 +75,8 @@ tests:
   - it: fails when externalSecrets is enabled without ESO CRD
     set:
       externalSecrets.enabled: true
+      observability.serviceMonitor.enabled: false
+      observability.prometheusRules.enabled: false
     capabilities:
       apiVersions: []
     asserts:
@@ -65,6 +86,7 @@ tests:
   - it: fails when ServiceMonitor is enabled without Prometheus Operator CRD
     set:
       observability.serviceMonitor.enabled: true
+      observability.prometheusRules.enabled: false
     capabilities:
       apiVersions: []
     asserts:
@@ -73,6 +95,7 @@ tests:
 
   - it: fails when PrometheusRule is enabled without Prometheus Operator CRD
     set:
+      observability.serviceMonitor.enabled: false
       observability.prometheusRules.enabled: true
     capabilities:
       apiVersions: []

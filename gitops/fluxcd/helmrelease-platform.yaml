@@ -54,7 +54,7 @@ spec:
       appName: alloy
       baseInstance: ""
     postgres:
-      enabled: ${{ values.enablePostgres }}
+      enabled: false
       # instances: 1
       # storage:
       #   size: 10Gi
@@ -66,7 +66,7 @@ spec:
       #     clusterRef: garage
       #     endpoint: "http://garage.garage.svc.cluster.local:3900"
     s3:
-      enabled: ${{ values.enableS3 }}
+      enabled: false
     observability:
       serviceMonitor:
         enabled: false

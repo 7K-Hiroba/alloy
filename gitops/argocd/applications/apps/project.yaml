@@ -13,7 +13,7 @@ metadata:
     app.kubernetes.io/name: alloy
     app.kubernetes.io/part-of: hiroba
 spec:
-  description: ${{ values.description }}
+  description: Grafana Alloy telemetry collector
   sourceRepos:
     - https://github.com/7K-Hiroba/alloy.git
   destinations:

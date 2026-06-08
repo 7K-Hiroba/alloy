@@ -1,10 +1,10 @@
-# Production patch for ${{ values.name }} platform chart.
+# Production patch for alloy platform chart.
 #
 # Full HA with 3-instance PostgreSQL cluster, Redis cluster, backups.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: ${{ values.name }}-platform
+  name: alloy-platform
   namespace: flux-system
 spec:
   values:

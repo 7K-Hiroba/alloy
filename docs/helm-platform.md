@@ -16,19 +16,19 @@ The ServiceMonitor below needs to select the base chart's pods. Set `global.base
 
 ```yaml
 global:
-  baseInstance: ${{ values.name }}   # release name used for `helm install <name> ./helm/base`
+  baseInstance: alloy   # release name used for `helm install <name> ./helm/base`
 ```
 
 Leave it empty to match by name only — acceptable when only one release of the app runs in the cluster.
 
 > PodDisruptionBudget lives in the [base chart](./helm-base.md#poddisruptionbudget), not here — it's tightly coupled to the Deployment's lifecycle.
 
-Values reference: [`helm/platform/values.yaml`](https://github.com/7K-Hiroba/${{ values.name }}/blob/main/helm/platform/values.yaml)
+Values reference: [`helm/platform/values.yaml`](https://github.com/7K-Hiroba/alloy/blob/main/helm/platform/values.yaml)
 
 ## Install
 
 ```bash
-helm install ${{ values.name }}-platform ./helm/platform \
+helm install alloy-platform ./helm/platform \
   --set postgres.enabled=true \
   --set externalSecrets.enabled=true
 ```
@@ -60,7 +60,7 @@ postgres:
     retentionPolicy: "7d"
 ```
 
-Connection credentials are published to a `Secret` named `${{ values.name }}-app` that the base chart can pull via `envFrom`.
+Connection credentials are published to a `Secret` named `alloy-app` that the base chart can pull via `envFrom`.
 
 ## S3 / Object storage
 
@@ -154,10 +154,10 @@ externalSecrets:
     kind: ClusterSecretStore
   data:
     - secretKey: DATABASE_URL
-      remoteKey: ${{ values.name }}/database
+      remoteKey: alloy/database
       property: url
     - secretKey: API_KEY
-      remoteKey: ${{ values.name }}/api
+      remoteKey: alloy/api
       property: key
 ```
 
@@ -167,7 +167,7 @@ To pull every key under a remote path instead of mapping them individually, use 
 externalSecrets:
   dataFrom:
     - extract:
-        key: ${{ values.name }}/config
+        key: alloy/config
 ```
 
 ### Value transformation
@@ -187,13 +187,13 @@ The double-brace escape (`{{ ` ... ` }}`) is needed because Helm processes the v
 
 ### Wiring back into the base chart
 
-The generated `Secret` is named after the application (`${{ values.name }}`). Reference it from the base chart's `envFrom`:
+The generated `Secret` is named after the application (`alloy`). Reference it from the base chart's `envFrom`:
 
 ```yaml
 # helm/base values override
 envFrom:
   - secretRef:
-      name: ${{ values.name }}
+      name: alloy
 ```
 
 See the [base chart injecting-secrets section](./helm-base.md#injecting-secrets) for which variables to map.

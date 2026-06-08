@@ -1,14 +1,14 @@
-# Staging overlay values for the ${{ values.name }} platform chart.
+# Staging overlay values for the alloy platform chart.
 #
 # Reduces HA and disables backups for cost savings.
 postgres:
-  enabled: ${{ values.enablePostgres }}
+  enabled: false
   instances: 1
   backup:
     enabled: false
 
 redis:
-  enabled: ${{ values.enablePostgres }}
+  enabled: false
   dragonfly:
     replicas: 1
 

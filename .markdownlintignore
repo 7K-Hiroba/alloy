@@ -1,0 +1,2 @@
+helm/**/charts/**
+helm/**/README.md.gotmpl

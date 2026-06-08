@@ -5,7 +5,7 @@ on:
     branches: [main]  
 
 permissions:
-  pull_requests: write
+  pull-requests: write
   contents: write
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
     uses: 7K-Hiroba/workflows-library/.github/workflows/ci-helm.yml@v1
     with:
       path: helm/platform
-   
+
   helm-docs:
     if: >-
       github.event_name == 'pull_request' ||

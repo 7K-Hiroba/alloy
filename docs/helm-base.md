@@ -8,13 +8,13 @@ The base chart deploys the application itself: `Deployment`, `Service`, `Service
 
 Template content is provided by the [`hiroba-app-lib`](https://hiroba.7kgroup.org/docs/architecture/helm-libraries) Helm library; the chart in this repo only ships a `values.yaml`, `values.schema.json`, and one thin `{{ include "hiroba-app.<resource>" . }}` wrapper per resource. Run `helm dependency update helm/base` before linting or rendering locally.
 
-Values reference: [`helm/base/values.yaml`](https://github.com/7K-Hiroba/${{ values.name }}/blob/main/helm/base/values.yaml)
+Values reference: [`helm/base/values.yaml`](https://github.com/7K-Hiroba/alloy/blob/main/helm/base/values.yaml)
 
 ## Install
 
 ```bash
-helm install ${{ values.name }} ./helm/base \
-  --set gateway.hostnames[0]=${{ values.name }}.yourdomain.com
+helm install alloy ./helm/base \
+  --set gateway.hostnames[0]=alloy.yourdomain.com
 ```
 
 ## Configuration
@@ -40,7 +40,7 @@ Don't put credentials in `env`. Use `envFrom` to pull from a `Secret` — typica
 ```yaml
 envFrom:
   - secretRef:
-      name: ${{ values.name }}
+      name: alloy
 ```
 
 See the [platform chart docs](./helm-platform.md#externalsecrets) for how the Secret gets populated.
@@ -58,7 +58,7 @@ gateway:
       namespace: gateway-system
       sectionName: https   # pin to the HTTPS listener
   hostnames:
-    - ${{ values.name }}.yourdomain.com
+    - alloy.yourdomain.com
 ```
 
 Pin `sectionName` to an HTTPS listener to avoid silently serving plaintext. HTTP→HTTPS redirect is a listener-level concern and lives on the parent Gateway, not in this chart.

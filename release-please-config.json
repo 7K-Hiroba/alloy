@@ -1,6 +1,12 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "packages": {
+    "helm/base": {
+      "component": "helm-base",
+      "release-type": "helm",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
     "helm/platform": {
       "component": "helm-platform",
       "release-type": "helm",

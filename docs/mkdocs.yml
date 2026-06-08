@@ -1,2 +1,2 @@
 # mkdocs.yml - necessary so backstage engine can build docs
-site_name: ${{ values.name }} Documentation
+site_name: alloy Documentation

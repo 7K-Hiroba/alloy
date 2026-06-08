@@ -1,6 +1,6 @@
 apiVersion: v2
-name: ${{ values.name }}-platform
-description: Platform dependencies for ${{ values.name }} — provisions databases, storage, and identity resources
+name: alloy-platform
+description: Platform dependencies for alloy — provisions databases, storage, and identity resources
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
@@ -18,21 +18,21 @@ keywords:
   - crossplane
   - cnpg
   - hiroba
-home: https://github.com/7K-Hiroba/${{ values.name }}
+home: https://github.com/7K-Hiroba/alloy
 sources:
-  - https://github.com/7K-Hiroba/${{ values.name }}
+  - https://github.com/7K-Hiroba/alloy
 annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/license: Apache-2.0
   artifacthub.io/links: |
     - name: documentation
-      url: https://hiroba.7kgroup.org/docs/apps/${{ values.name }}/helm-platform
+      url: https://hiroba.7kgroup.org/docs/apps/alloy/helm-platform
     - name: source
-      url: https://github.com/7K-Hiroba/${{ values.name }}
+      url: https://github.com/7K-Hiroba/alloy
     - name: support
-      url: https://github.com/7K-Hiroba/${{ values.name }}/issues
+      url: https://github.com/7K-Hiroba/alloy/issues
   artifacthub.io/images: |
-    - name: ${{ values.name }}-platform
-      image: https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/${{ values.name }}.svg
+    - name: alloy-platform
+      image: https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/alloy.svg
   artifacthub.io/maintainers: |
     - name: 7k-hiroba

@@ -1,0 +1,61 @@
+# FluxCD HelmRelease for the alloy base chart.
+#
+# Deploys Grafana Alloy as a DaemonSet for cluster-wide telemetry collection.
+# Reconciles automatically every 5 minutes.
+#
+# Usage:
+#   kubectl apply -f gitops/fluxcd/apps/helmrelease-base.yaml
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: alloy-base
+  namespace: flux-system
+  labels:
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/component: base
+    app.kubernetes.io/part-of: hiroba
+spec:
+  interval: 5m
+  releaseName: alloy
+  targetNamespace: alloy
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+  chart:
+    spec:
+      chart: ./helm/base
+      sourceRef:
+        kind: GitRepository
+        name: alloy
+        namespace: flux-system
+  values:
+    alloy:
+      image:
+        repository: grafana/alloy
+        pullPolicy: IfNotPresent
+        tag: ""
+      controller:
+        type: daemonset
+      service:
+        enabled: true
+        type: ClusterIP
+      alloy:
+        enableReporting: false
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        mounts:
+          varlog: true
+          dockercontainers: true
+        envFrom:
+          - configMapRef:
+              name: alloy-config

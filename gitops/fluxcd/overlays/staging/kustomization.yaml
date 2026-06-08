@@ -1,4 +1,4 @@
-# Staging overlay Kustomization for ${{ values.name }}.
+# Staging overlay Kustomization for alloy.
 #
 # Reduces resources and disables HA for cost-effective staging.
 resources:
@@ -7,8 +7,8 @@ patches:
   - path: base-patch.yaml
     target:
       kind: HelmRelease
-      name: ${{ values.name }}-base
+      name: alloy-base
   - path: platform-patch.yaml
     target:
       kind: HelmRelease
-      name: ${{ values.name }}-platform
+      name: alloy-platform

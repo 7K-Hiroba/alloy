@@ -1,10 +1,10 @@
-# Staging patch for ${{ values.name }} platform chart.
+# Staging patch for alloy platform chart.
 #
 # Reduces HA and disables backups for cost savings.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: ${{ values.name }}-platform
+  name: alloy-platform
   namespace: flux-system
 spec:
   values:

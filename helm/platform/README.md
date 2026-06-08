@@ -1,16 +1,16 @@
-# ${{ values.name }}-platform
+# alloy-platform
 
-Platform dependencies for ${{ values.name }} — provisions databases, storage, and identity resources
+Platform dependencies for alloy — provisions databases, storage, and identity resources
 
 ![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square)  ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)  ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
 
-Install this **alongside** the base chart, typically in the same namespace.**Documentation:** <https://hiroba.7kgroup.org/docs/apps/${{ values.name }}/helm-platform>
+Install this **alongside** the base chart, typically in the same namespace.**Documentation:** <https://hiroba.7kgroup.org/docs/apps/alloy/helm-platform>
 
 ## TL;DR
 
 ```bash
-helm install ${{ values.name }}-platform \
-  oci://harbor.7kgroup.org/7khiroba/charts/${{ values.name }}-platform \
+helm install alloy-platform \
+  oci://harbor.7kgroup.org/7khiroba/charts/alloy-platform \
   --version 0.1.0
 ```
 
@@ -22,7 +22,7 @@ Every release is signed keylessly with [cosign](https://docs.sigstore.dev/) via 
 cosign verify \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   --certificate-identity-regexp 'github.com/7K-Hiroba/' \
-  harbor.7kgroup.org/7khiroba/charts/${{ values.name }}-platform:0.1.0
+  harbor.7kgroup.org/7khiroba/charts/alloy-platform:0.1.0
 ```
 
 ## Configuration examples
@@ -61,10 +61,10 @@ externalSecrets:
     kind: ClusterSecretStore
   data:
     - secretKey: DATABASE_URL
-      remoteKey: ${{ values.name }}/db
+      remoteKey: alloy/db
       property: url
     - secretKey: API_KEY
-      remoteKey: ${{ values.name }}/api
+      remoteKey: alloy/api
       property: key
 ```
 
@@ -107,7 +107,7 @@ Kubernetes: `>=1.24.0-0`
 | externalSecrets.refreshInterval | string | `"1h"` | How often to sync secrets |
 | externalSecrets.storeRef | object | `{"kind":"ClusterSecretStore","name":"cluster-secret-store"}` | SecretStore or ClusterSecretStore reference |
 | externalSecrets.target | object | `{"template":{}}` | Optional target Secret template for value transformation. See https://external-secrets.io/latest/guides/templating/ |
-| global.appName | string | `"${{ values.name }}"` | Application name, used as prefix for all platform resources |
+| global.appName | string | `"alloy"` | Application name, used as prefix for all platform resources |
 | global.baseInstance | string | `""` | Release name of the base chart deployment. When set, the ServiceMonitor selector matches `app.kubernetes.io/instance: <baseInstance>` so multiple releases of the same app coexist safely. Leave empty to match by name only. |
 | observability | object | `{"grafanaDashboard":{"enabled":false,"folderLabel":""},"prometheusRules":{"enabled":false,"groups":[{"name":"{{ include \"hiroba-platform.name\" . }}.rules","rules":[{"alert":"HighErrorRate","annotations":{"description":"Error rate is above 5% for the last 5 minutes.","summary":"High error rate for {{ include \"hiroba-platform.name\" . }}"},"expr":"sum(rate(http_requests_total{namespace=\"{{ .Release.Namespace }}\", service=\"{{ include \"hiroba-platform.name\" . }}\", status=~\"5..\"}[5m]))\n/\nsum(rate(http_requests_total{namespace=\"{{ .Release.Namespace }}\", service=\"{{ include \"hiroba-platform.name\" . }}\"}[5m]))\n> 0.05\n","for":"5m","labels":{"severity":"warning"}},{"alert":"HighLatency","annotations":{"description":"p99 latency is above 1 second for the last 5 minutes.","summary":"High p99 latency for {{ include \"hiroba-platform.name\" . }}"},"expr":"histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{namespace=\"{{ .Release.Namespace }}\", service=\"{{ include \"hiroba-platform.name\" . }}\"}[5m]))\n> 1\n","for":"5m","labels":{"severity":"warning"}}]}]},"serviceMonitor":{"additionalLabels":{},"enabled":false,"interval":"30s","path":"/metrics","port":"http","scrapeTimeout":"10s"}}` | Observability resources |
 | observability.grafanaDashboard | object | `{"enabled":false,"folderLabel":""}` | Grafana dashboard (deployed as ConfigMap with sidecar label) |
@@ -119,7 +119,7 @@ Kubernetes: `>=1.24.0-0`
 | observability.serviceMonitor.path | string | `"/metrics"` | Metrics endpoint path |
 | observability.serviceMonitor.port | string | `"http"` | Service port name to scrape |
 | observability.serviceMonitor.scrapeTimeout | string | `"10s"` | Scrape timeout |
-| postgres | object | `{"backup":{"bucketName":"","credentialsSecret":{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"},"enabled":false,"endpoint":"http://garage.garage.svc.cluster.local:3900","retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":"${{ values.enablePostgres }}","imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database |
+| postgres | object | `{"backup":{"bucketName":"","credentialsSecret":{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"},"enabled":false,"endpoint":"http://garage.garage.svc.cluster.local:3900","retentionPolicy":"7d","schedule":"0 2 * * *"},"database":"app","enabled":"false","imageName":"ghcr.io/cloudnative-pg/postgresql:16.2","instances":1,"owner":"app","provider":"cnpg","resources":{"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"250m","memory":"256Mi"}},"storage":{"size":"10Gi","storageClass":""}}` | PostgreSQL database |
 | postgres.backup | object | `{"bucketName":"","credentialsSecret":{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"},"enabled":false,"endpoint":"http://garage.garage.svc.cluster.local:3900","retentionPolicy":"7d","schedule":"0 2 * * *"}` | Backup configuration (optional) |
 | postgres.backup.bucketName | string | `""` | S3 bucket name for backups (defaults to <app>-pg-backups) |
 | postgres.backup.credentialsSecret | object | `{"accessKeyKey":"accessKeyId","name":"","regionKey":"region","secretKeyKey":"secretAccessKey"}` | Pre-existing secret containing S3 credentials |
@@ -132,7 +132,7 @@ Kubernetes: `>=1.24.0-0`
 | postgres.imageName | string | `"ghcr.io/cloudnative-pg/postgresql:16.2"` | PostgreSQL version |
 | postgres.owner | string | `"app"` | Database owner |
 | postgres.provider | string | `"cnpg"` | Provider: "cnpg" (CloudNativePG operator) |
-| s3 | object | `{"buckets":[{"acl":"private","name":"assets"}],"crossplane":{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"},"enabled":"${{ values.enableS3 }}","garage":{"clusterRef":"garage","clusterRefNamespace":"","lifecycle":{},"quotas":{},"website":{}},"provider":"crossplane"}` | S3-compatible object storage buckets |
+| s3 | object | `{"buckets":[{"acl":"private","name":"assets"}],"crossplane":{"lifecycle":{"enabled":false,"expirationDays":90},"providerConfigRef":"aws-provider","region":"us-east-1"},"enabled":"false","garage":{"clusterRef":"garage","clusterRefNamespace":"","lifecycle":{},"quotas":{},"website":{}},"provider":"crossplane"}` | S3-compatible object storage buckets |
 | s3.buckets | list | `[{"acl":"private","name":"assets"}]` | List of S3 buckets to provision. All use the same provider. |
 | s3.buckets[0] | object | `{"acl":"private","name":"assets"}` | Bucket name (will be prefixed with app name) |
 | s3.buckets[0].acl | string | `"private"` | Bucket ACL |
@@ -153,7 +153,7 @@ Full schema in [`values.schema.json`](values.schema.json). Artifact Hub renders 
 
 | Resource | What stays | How to remove |
 |---|---|---|
-| CNPG `Cluster` PVCs | PostgreSQL data volumes | `kubectl delete pvc -l cnpg.io/cluster=${{ values.name }}` |
+| CNPG `Cluster` PVCs | PostgreSQL data volumes | `kubectl delete pvc -l cnpg.io/cluster=alloy` |
 | Garage backup bucket | WAL archives / base backups | Delete the `GarageBucket` resource, then the bucket contents |
 | Crossplane `Bucket` | S3 bucket and its contents | Set `deletionPolicy: Delete` *before* uninstall, or remove the bucket manually after |
 | `ExternalSecret` target | The synced `Secret` in-cluster | `kubectl delete secret <target-name>` |
@@ -169,7 +169,7 @@ Tip: do a dry run with `helm uninstall --dry-run` first to see what *will* be re
 
 ## Source Code
 
-* <https://github.com/7K-Hiroba/${{ values.name }}>
+* <https://github.com/7K-Hiroba/alloy>
 
 ## Part of the Hiroba ecosystem
 

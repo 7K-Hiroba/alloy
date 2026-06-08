@@ -1,0 +1,53 @@
+suite: base chart rendering
+templates:
+  - charts/alloy/templates/controllers/daemonset.yaml
+  - charts/alloy/templates/service.yaml
+  - charts/alloy/templates/rbac.yaml
+tests:
+  - it: renders with default values
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: charts/alloy/templates/controllers/daemonset.yaml
+      - equal:
+          path: kind
+          value: DaemonSet
+        template: charts/alloy/templates/controllers/daemonset.yaml
+      - hasDocuments:
+          count: 1
+        template: charts/alloy/templates/service.yaml
+      - equal:
+          path: kind
+          value: Service
+        template: charts/alloy/templates/service.yaml
+
+  - it: uses upstream image
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: docker.io/grafana/alloy:v1.16.1
+        template: charts/alloy/templates/controllers/daemonset.yaml
+
+  - it: disables reporting
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --disable-reporting
+        template: charts/alloy/templates/controllers/daemonset.yaml
+
+  - it: mounts host logs
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: varlog
+            hostPath:
+              path: /var/log
+        template: charts/alloy/templates/controllers/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: varlog
+            mountPath: /var/log
+            readOnly: true
+        template: charts/alloy/templates/controllers/daemonset.yaml

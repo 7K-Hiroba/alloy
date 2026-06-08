@@ -1,0 +1,60 @@
+# Base values for Grafana Alloy
+# Wraps the upstream grafana/alloy Helm chart.
+# See https://github.com/grafana/alloy/tree/main/operations/helm/charts/alloy
+#
+# NOTE: All upstream values are nested under the `alloy:` key because that is
+# the dependency name. Upstream's `alloy:` settings live under `alloy.alloy:`.
+
+alloy:
+  image:
+    repository: grafana/alloy
+    pullPolicy: IfNotPresent
+    tag: ""
+
+  controller:
+    type: daemonset
+    replicas: 1
+
+  service:
+    enabled: true
+    type: ClusterIP
+
+  alloy:
+    enableReporting: false
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    mounts:
+      varlog: true
+      dockercontainers: true
+
+  serviceAccount:
+    create: true
+
+  rbac:
+    create: true
+
+  configReloader:
+    enabled: true
+    resources:
+      requests:
+        cpu: 10m
+        memory: 50Mi
+
+  serviceMonitor:
+    enabled: false
+
+  ingress:
+    enabled: false
+
+# Gateway API HTTPRoute — disabled by default for Alloy
+# (telemetry collectors typically do not expose public endpoints)
+gateway:
+  enabled: false
+  hostnames: []
+  parentRefs:
+    - name: default-gateway

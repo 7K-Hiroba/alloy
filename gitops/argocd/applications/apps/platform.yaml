@@ -34,7 +34,7 @@ spec:
           appName: alloy
           baseInstance: ""
         postgres:
-          enabled: ${{ values.enablePostgres }}
+          enabled: false
           provider: cnpg
           instances: 3
           storage:
@@ -68,7 +68,7 @@ spec:
               secretKeyKey: secretAccessKey
               regionKey: region
         redis:
-          enabled: ${{ values.enablePostgres }}
+          enabled: false
           provider: dragonfly
           dragonfly:
             replicas: 3
@@ -96,7 +96,7 @@ spec:
             args: []
             env: []
         s3:
-          enabled: ${{ values.enableS3 }}
+          enabled: false
         externalSecrets:
           enabled: true
           refreshInterval: 1h
@@ -117,7 +117,7 @@ spec:
           serviceMonitor:
             enabled: true
             additionalLabels: {}
-            port: http
+            port: http-metrics
             path: /metrics
             interval: 30s
             scrapeTimeout: 10s

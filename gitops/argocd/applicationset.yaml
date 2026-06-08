@@ -1,30 +1,30 @@
-# ArgoCD ApplicationSet for multi-environment, multi-chart deployment of ${{ values.name }}.
+# ArgoCD ApplicationSet for multi-environment, multi-chart deployment of alloy.
 #
 # Generates Applications for both base and platform charts across
 # staging and production environments. Each environment gets its own
 # overlay with appropriate resource sizing and HA configuration.
 #
 # Structure per environment:
-#   ${{ values.name }}-<env>-base      → Application workload
-#   ${{ values.name }}-<env>-platform  → Infrastructure (DB, cache, secrets, observability)
+#   alloy-<env>-base      → Application workload
+#   alloy-<env>-platform  → Infrastructure (DB, cache, secrets, observability)
 #
 # Usage:
 #   kubectl apply -f gitops/argocd/applicationset.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: ${{ values.name }}
+  name: alloy
   namespace: argocd
   labels:
-    app.kubernetes.io/name: ${{ values.name }}
+    app.kubernetes.io/name: alloy
     app.kubernetes.io/part-of: hiroba
 spec:
   generators:
     - list:
         elements:
           - env: staging
-            host: ${{ values.name }}-staging.example.com
-            namespace: ${{ values.name }}-staging
+            host: alloy-staging.example.com
+            namespace: alloy-staging
             baseReplicas: 1
             pgInstances: 1
             redisReplicas: 1
@@ -32,8 +32,8 @@ spec:
             storageSize: 10Gi
             autoSync: "true"
           - env: production
-            host: ${{ values.name }}.example.com
-            namespace: ${{ values.name }}
+            host: alloy.example.com
+            namespace: alloy
             baseReplicas: 2
             pgInstances: 3
             redisReplicas: 3
@@ -42,75 +42,69 @@ spec:
             autoSync: "true"
   template:
     metadata:
-      name: "${{ values.name }}-{{env}}"
+      name: "alloy-{{env}}"
       namespace: argocd
       finalizers:
         - resources-finalizer.argocd.argoproj.io
       labels:
-        app.kubernetes.io/name: ${{ values.name }}
+        app.kubernetes.io/name: alloy
         app.kubernetes.io/part-of: hiroba
         environment: "{{env}}"
     spec:
-      project: ${{ values.name }}
+      project: alloy
       sources:
-        - repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
+        - repoURL: https://github.com/7K-Hiroba/alloy.git
           targetRevision: HEAD
           path: helm/base
           helm:
             valuesObject:
-              replicaCount: "{{baseReplicas}}"
-              image:
-                repository: ghcr.io/7k-hiroba/${{ values.name }}
-                pullPolicy: IfNotPresent
-                tag: ""
-              gateway:
-                enabled: true
-                hostnames:
-                  - "{{host}}"
-                parentRefs:
-                  - name: default-gateway
-              envFrom:
-                - configMapRef:
-                    name: ${{ values.name }}-config
-                - secretRef:
-                    name: ${{ values.name }}
-        - repoURL: https://github.com/7K-Hiroba/${{ values.name }}.git
+              alloy:
+                image:
+                  repository: grafana/alloy
+                  pullPolicy: IfNotPresent
+                  tag: ""
+                controller:
+                  type: daemonset
+                alloy:
+                  resources:
+                    limits:
+                      cpu: 500m
+                      memory: 512Mi
+                    requests:
+                      cpu: 100m
+                      memory: 256Mi
+                  envFrom:
+                    - configMapRef:
+                        name: alloy-config
+        - repoURL: https://github.com/7K-Hiroba/alloy.git
           targetRevision: HEAD
           path: helm/platform
           helm:
             valuesObject:
               global:
-                appName: ${{ values.name }}
+                appName: alloy
               postgres:
-                enabled: ${{ values.enablePostgres }}
+                enabled: false
                 instances: "{{pgInstances}}"
                 storage:
                   size: "{{storageSize}}"
-                database: ${{ values.name }}
-                owner: ${{ values.name }}
+                database: alloy
+                owner: alloy
                 backup:
                   enabled: "{{backup}}"
               redis:
-                enabled: ${{ values.enablePostgres }}
+                enabled: false
                 dragonfly:
                   replicas: "{{redisReplicas}}"
               s3:
-                enabled: ${{ values.enableS3 }}
+                enabled: false
               externalSecrets:
-                enabled: true
-                storeRef:
-                  name: cluster-secret-store
-                  kind: ClusterSecretStore
-                data:
-                  - secretKey: ACCESS_TOKEN_SALT
-                    remoteKey: ${{ values.name }}/auth
-                    property: access-token-salt
-                  - secretKey: JWT_SECRET_KEY
-                    remoteKey: ${{ values.name }}/auth
-                    property: jwt-secret-key
+                enabled: false
               observability:
                 serviceMonitor:
                   enabled: true
+                  port: http-metrics
+                  path: /metrics
                 grafanaDashboard:
                   enabled: true
                 prometheusRules:

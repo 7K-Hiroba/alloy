@@ -1,4 +1,4 @@
-# Production overlay Kustomization for ${{ values.name }}.
+# Production overlay Kustomization for alloy.
 #
 # Full HA configuration with increased resources.
 resources:
@@ -7,8 +7,8 @@ patches:
   - path: base-patch.yaml
     target:
       kind: HelmRelease
-      name: ${{ values.name }}-base
+      name: alloy-base
   - path: platform-patch.yaml
     target:
       kind: HelmRelease
-      name: ${{ values.name }}-platform
+      name: alloy-platform

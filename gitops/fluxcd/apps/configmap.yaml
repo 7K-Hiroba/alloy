@@ -1,6 +1,8 @@
 # ConfigMap for non-sensitive alloy configuration.
 #
-# Secrets are managed via ExternalSecrets.
+# Alloy configuration is primarily delivered via the Helm chart's
+# configMap.create / configMap.content values. This ConfigMap can be
+# used for additional environment variables consumed by Alloy components.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,5 +12,5 @@ metadata:
     app.kubernetes.io/name: alloy
     app.kubernetes.io/part-of: hiroba
 data:
-  NODE_ENV: production
-  PORT: "3333"
+  # Example: set Alloy deployment mode hint
+  ALLOY_DEPLOY_MODE: helm

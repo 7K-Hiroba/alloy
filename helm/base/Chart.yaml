@@ -1,0 +1,37 @@
+apiVersion: v2
+name: alloy
+description: Grafana Alloy telemetry collector
+type: application
+version: 0.1.0
+appVersion: "v1.16.1"
+kubeVersion: ">=1.24.0-0"
+dependencies:
+  - name: alloy
+    version: 1.8.2
+    repository: https://grafana.github.io/helm-charts
+maintainers:
+  - name: 7k-hiroba
+keywords:
+  - alloy
+  - grafana
+  - observability
+  - telemetry
+home: https://github.com/7K-Hiroba/alloy
+sources:
+  - https://github.com/7K-Hiroba/alloy
+  - https://github.com/grafana/alloy
+annotations:
+  artifacthub.io/category: monitoring-logging
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/links: |
+    - name: documentation
+      url: https://hiroba.7kgroup.org/docs/apps/alloy/helm-base
+    - name: source
+      url: https://github.com/7K-Hiroba/alloy
+    - name: support
+      url: https://github.com/7K-Hiroba/alloy/issues
+  artifacthub.io/images: |
+    - name: alloy
+      image: grafana/alloy:v1.16.1
+  artifacthub.io/maintainers: |
+    - name: 7k-hiroba

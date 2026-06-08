@@ -16,10 +16,10 @@ jobs:
       charts: |
         [
           { "file": "helm/base-artifacthub-repo.yml",
-            "chart": "${{ values.name }}",
-            "displayName": "${{ values.displayName }}" },
+            "chart": "alloy",
+            "displayName": "Alloy" },
           { "file": "helm/platform-artifacthub-repo.yml",
-            "chart": "${{ values.name }}-platform",
-            "displayName": "${{ values.displayName }} — Platform" }
+            "chart": "alloy-platform",
+            "displayName": "Alloy — Platform" }
         ]
     secrets: inherit
