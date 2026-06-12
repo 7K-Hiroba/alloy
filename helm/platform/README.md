@@ -2,7 +2,7 @@
 
 Platform dependencies for alloy — provisions databases, storage, and identity resources
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square)  ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)  ![AppVersion: v1.16.3](https://img.shields.io/badge/AppVersion-v1.16.3-informational?style=flat-square)
+![Version: 0.1.1](https://img.shields.io/badge/Version-0.1.1-informational?style=flat-square)  ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)  ![AppVersion: v1.17.0](https://img.shields.io/badge/AppVersion-v1.17.0-informational?style=flat-square)
 
 Install this **alongside** the base chart, typically in the same namespace.**Documentation:** <https://hiroba.7kgroup.org/docs/apps/alloy/helm-platform>
 
@@ -11,7 +11,7 @@ Install this **alongside** the base chart, typically in the same namespace.**Doc
 ```bash
 helm install alloy-platform \
   oci://harbor.7kgroup.org/7khiroba/charts/alloy-platform \
-  --version 0.1.0
+  --version 0.1.1
 ```
 
 ## Verify the chart signature
@@ -22,7 +22,7 @@ Every release is signed keylessly with [cosign](https://docs.sigstore.dev/) via 
 cosign verify \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   --certificate-identity-regexp 'github.com/7K-Hiroba/' \
-  harbor.7kgroup.org/7khiroba/charts/alloy-platform:0.1.0
+  harbor.7kgroup.org/7khiroba/charts/alloy-platform:0.1.1
 ```
 
 ## Configuration examples
@@ -95,7 +95,7 @@ Kubernetes: `>=1.24.0-0`
 
 | Repository | Name | Version |
 |------------|------|---------|
-| oci://harbor.7kgroup.org/7khiroba/charts | hiroba-platform-lib | ^0.1.0 |
+| oci://harbor.7kgroup.org/7khiroba/charts | hiroba-platform-lib | ^0.2.11 |
 
 ## Values
 
